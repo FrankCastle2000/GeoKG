@@ -4,6 +4,7 @@ import re
 
 
 def extract_project_type(sentence):
+    """通过NN生成项目类别"""
     hanlp.pretrained.mtl.ALL  # MTL多任务，具体任务见模型名称，语种见名称最后一个字段或相应语料库
     pipeline = hanlp.load(hanlp.pretrained.mtl.CLOSE_TOK_POS_NER_SRL_UDEP_SDP_CON_ELECTRA_SMALL_ZH)
     doc = pipeline([sentence], tasks=['pos/ctb', 'dep'])
@@ -23,6 +24,7 @@ def extract_project_type(sentence):
 
 
 def is_useful(s: str):
+    """筛选有用的项目关键词"""
     info = False
     if "电气" in s:
         info = True
@@ -34,34 +36,55 @@ def is_useful(s: str):
         info = True
     elif "输变电" in s:
         info = True
+    elif "配水站" in s:
+        info = True
+    elif "垃圾" in s:
+        info = True
     return info
 
 
-data = pd.read_excel(r"E:\python\练习\词向量聚类\hx\100\data4_test.xlsx", sheet_name="Sheet1")
-project_names = []
-all_names = data["项目名称"]
-# 筛选去除不规范文件名
-# # 去除名文件名中的括号及括号里的内容
-for project_name in all_names:
-    new_name = re.sub(u"\\(.*?\\)|\\（.*?\\）|\\（.*?\\)|\\(.*?\\）", "", project_name)
-    project_names.append(new_name)
-# # 将结果写入txt文件
-# f = open("data3.txt", "a", encoding="utf-8")
-for project_name in project_names:
-    if project_name[-2::] == "项目":
-        # project_name = project_name.replace("项目", "")
-        project_type = extract_project_type(project_name)
-        if project_type[-6::] == "建设用地项目" and not is_useful(project_type):
-            project_type = "无法分类"
-        elif project_type[-4::] == "建设项目" and not is_useful(project_type):
-            project_type = "无法分类"
-        elif project_type[-4::] == "用地项目" and not is_useful(project_type):
-            project_type = "无法分类"
-        elif project_type[-4::] == "工程项目" and not is_useful(project_type):
-            project_type = "无法分类"
-        # f.writelines(f"{project_name} -> {project_type}")
-        # f.writelines("\n")
-        print(f"{project_name} -> {project_type}")
-# f.close()
+def get_type(project_names):
+    """循环生成项目类别"""
+    all_types = []
+    # f = open("data3.txt", "a", encoding="utf-8")
+    for project_name in project_names:
+        if project_name[-2::] == "项目":
+            # project_name = project_name.replace("项目", "")
+            project_type = extract_project_type(project_name)
+            if project_type[-6::] == "建设用地项目" and not is_useful(project_type):
+                project_type = "无法分类"
+            elif project_type[-4::] == "建设项目" and not is_useful(project_type):
+                project_type = "无法分类"
+            elif project_type[-4::] == "用地项目" and not is_useful(project_type):
+                project_type = "无法分类"
+            elif project_type[-4::] == "工程项目" and not is_useful(project_type):
+                project_type = "无法分类"
+            elif "年度" in project_type:
+                project_type = "无法分类"
+            # f.writelines(f"{project_name} -> {project_type}")
+            # f.writelines("\n")
+            all_types.append(f"{project_name} -> {project_type}")
+            print(f"{project_name} -> {project_type}")
+    # f.close()
+    return all_types
 
 
+def name_format(name_list):
+    """去除文件名中的括号及括号里的内容"""
+    project_names = []
+    for name in name_list:
+        new_name = re.sub(u"\\(.*?\\)|\\（.*?\\）|\\（.*?\\)|\\(.*?\\）", "", name)
+        project_names.append(new_name)
+    return project_names
+
+
+def type_clean(type_list):
+    """对类型结果进行清洗，去除结果中的地名"""
+    pass
+
+
+if __name__ == "__main__":
+    data = pd.read_excel(r"E:\python\练习\词向量聚类\hx\100\data4_test.xlsx", sheet_name="Sheet1")
+    allNames = data["项目名称"]
+    projectNames = name_format(allNames)
+    allTypes = get_type(projectNames)

@@ -100,7 +100,7 @@ nlp.insert(0, tok, output_key='tok')
 #     f.writelines("\n")
 # f.close()
 
-doc = nlp("安化县2022年第十九批次用地项目")
+doc = nlp("云溪区松阳湖港区化工码头至云溪区绿色化工园公路工程项目")
 print(doc["con"])
 doc.pretty_print()
 # NP_list = getNP(str(doc["con"]))
