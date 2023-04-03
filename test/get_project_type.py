@@ -40,16 +40,21 @@ def is_useful(s: str):
         info = True
     elif "垃圾" in s:
         info = True
+    elif "升压站" in s:
+        info = True
+    elif "游客" in s:
+        info = True
     return info
 
 
 def get_type(project_names):
     """循环生成项目类别"""
     all_types = []
-    # f = open("data3.txt", "a", encoding="utf-8")
+    all_project_names = []
     for project_name in project_names:
+        # 只有项目名称以“项目”结尾的才添加到all_project_names列表中
         if project_name[-2::] == "项目":
-            # project_name = project_name.replace("项目", "")
+            all_project_names.append(project_name)
             project_type = extract_project_type(project_name)
             if project_type[-6::] == "建设用地项目" and not is_useful(project_type):
                 project_type = "无法分类"
@@ -61,15 +66,12 @@ def get_type(project_names):
                 project_type = "无法分类"
             elif "年度" in project_type:
                 project_type = "无法分类"
-            # f.writelines(f"{project_name} -> {project_type}")
-            # f.writelines("\n")
-            all_types.append(f"{project_name} -> {project_type}")
+            all_types.append(project_type)
             print(f"{project_name} -> {project_type}")
-    # f.close()
-    return all_types
+    return all_types, all_project_names
 
 
-def name_format(name_list):
+def name_format(name_list: list):
     """去除文件名中的括号及括号里的内容"""
     project_names = []
     for name in name_list:
@@ -78,13 +80,45 @@ def name_format(name_list):
     return project_names
 
 
-def type_clean(type_list):
-    """对类型结果进行清洗，去除结果中的地名"""
-    pass
+def _get_new_type(_type: str, _key: str):
+    """去除项目名称中的地名"""
+    new_string = _type
+    for s in _type:
+        if s != _key[0]:
+            new_string = new_string[1:]
+        elif s == _key[0]:
+            return new_string
+
+
+def type_clean(type_list: list):
+    """对类型结果进行清洗"""
+    all_type_cleaned = []
+    for _type in type_list:
+        if "污水" in _type:
+            all_type_cleaned.append(_get_new_type(_type, "污水"))
+        elif "升压站" in _type:
+            all_type_cleaned.append(_get_new_type(_type, "升压站"))
+        elif "公路" in _type:
+            all_type_cleaned.append(_get_new_type(_type, "公路"))
+        else:
+            all_type_cleaned.append(_type)
+    return all_type_cleaned
+
+
+def save_to_txt(type_list: list, all_project_nams: list, save_path="all_type.txt"):
+    """将结果分行写入txt文件"""
+    f = open(save_path, "a", encoding="utf-8")
+    for idx in range(len(type_list)):
+        s = f"{all_project_nams[idx]} -> {type_list[idx]}"
+        f.writelines(s)
+        f.writelines("\n")
+    f.close()
 
 
 if __name__ == "__main__":
     data = pd.read_excel(r"E:\python\练习\词向量聚类\hx\100\data4_test.xlsx", sheet_name="Sheet1")
     allNames = data["项目名称"]
     projectNames = name_format(allNames)
-    allTypes = get_type(projectNames)
+    allProjectTypes, allProjectNames = get_type(projectNames)
+    allTypesCleaned = type_clean(allProjectTypes)
+    save_to_txt(allTypesCleaned, allProjectNames)
